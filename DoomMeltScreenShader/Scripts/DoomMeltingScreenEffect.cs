@@ -2,31 +2,54 @@ using Cyan;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEditor;
 using UnityEngine.Rendering.Universal;
+using TMPro;
+using UnityTemplateProjects;
 
 public class DoomMeltingScreenEffect : MonoBehaviour
 {
-    int TimeOffsetId = Shader.PropertyToID("TimePassed_");
-    [SerializeField] ForwardRendererData rendererData;
+    int TimeOffsetId = Shader.PropertyToID("_AnimationTime");
+    [SerializeField] UniversalRendererData rendererData;
     [SerializeField] string featureName = "DoomReloadingScreen";
     RenderTexture texture;
     Material mat;
-    public Camera activeCamera;
     [Min(0)]
     public float ScreenMeltTime;
     [Range(0, 1)]
-    public float Lerp = 1;
+    public float AnimationTime = 0;
     Blit blit;
+    public Camera activeCamera;
 
+    [System.Serializable]
+    public class DoomScreenMeltSettings
+    {
+        [Tooltip("How much from the top the column will be offseted")]
+        public float MaxOffset = 0.2f;
+        [Tooltip("Seed for random offset of each column")]
+        public float Seed;
+        [Tooltip("How much columns there will be")]
+        public int NumberOfStripes = 20;
+    }
 
     public DoomScreenMeltSettings materialSettings = new DoomScreenMeltSettings();
 
-    void SetMaterialSettings(DoomScreenMeltSettings dsms)
+    public void SetMaterialSettings(DoomScreenMeltSettings dsms)
     {
-        mat.SetFloat("MaxOffset_", dsms.MaxOffset);
-        mat.SetFloat("Seed_", dsms.Seed);
-        mat.SetFloat("Subdivisions_", dsms.Subdivisions);
-        mat.SetTexture("OldTexture_", texture);
+        mat.SetFloat("_MaxOffset", dsms.MaxOffset);
+        mat.SetFloat("_Seed", dsms.Seed);
+        mat.SetFloat("_NumberOfStripes", dsms.NumberOfStripes);
+        mat.SetTexture("_OldTexture", texture);
+    }
+
+    public void StartScreenMelt(float meltTime, Camera camera)
+    {
+        AnimationTime = 1;
+        mat.SetFloat(TimeOffsetId, AnimationTime);   
+        camera.targetTexture = texture;
+        camera.Render();
+        camera.targetTexture = null;
+        StartCoroutine(ChangeTime(meltTime));
     }
 
     public void StartScreenMelt()
@@ -34,31 +57,19 @@ public class DoomMeltingScreenEffect : MonoBehaviour
         StartScreenMelt(ScreenMeltTime, activeCamera);
     }
 
-    public void StartScreenMelt(float meltTime, Camera camera)
-    {
-        Lerp = 1;
-        mat.SetFloat(TimeOffsetId, Lerp);   
-        camera.targetTexture = texture;
-        camera.Render();
-        camera.targetTexture = null;
-        StartCoroutine(ChangeTime(meltTime));
-    }
-
     IEnumerator ChangeTime(float meltTime)
     {
-        Lerp = 0;
         WaitForEndOfFrame wfeof = new WaitForEndOfFrame();
-        while (Mathf.Floor(Lerp) != 1)
+        while (Mathf.Ceil(AnimationTime) != 0)
         {
-            Lerp += Time.deltaTime / meltTime;
+            AnimationTime -= Time.deltaTime / meltTime;
             yield return wfeof;
         }
-        Lerp = 1;
+        AnimationTime = 0;
     }
 
     void Start()
     {
-        Lerp = 1;
         texture = new RenderTexture(Screen.width, Screen.height, 0);
         mat = CoreUtils.CreateEngineMaterial("Shader Graphs/DoomLoadingScreenShader");
         SetMaterialSettings(materialSettings);
@@ -71,7 +82,7 @@ public class DoomMeltingScreenEffect : MonoBehaviour
     {
         if(mat != null)
         {
-            mat.SetFloat(TimeOffsetId, Lerp);
+            mat.SetFloat(TimeOffsetId, 1 - AnimationTime);
         }
     }
 
@@ -82,16 +93,5 @@ public class DoomMeltingScreenEffect : MonoBehaviour
     private void OnDestroy()
     {
         blit.settings.blitMaterial = null;
-    }
-
-    [System.Serializable]
-    public class DoomScreenMeltSettings
-    {
-        [Tooltip("How much from the top the column will be offseted")]
-        public float MaxOffset = 0.2f;
-        [Tooltip("Seed for random offset of each column")]
-        public float Seed;
-        [Tooltip("How much columns there will be")]
-        public int Subdivisions = 20;
     }
 }
