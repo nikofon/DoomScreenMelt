@@ -41,12 +41,12 @@ public class DoomMeltingScreenEffect : MonoBehaviour
         camera.targetTexture = texture;
         camera.Render();
         camera.targetTexture = null;
-        Lerp = 0;
         StartCoroutine(ChangeTime(meltTime));
     }
 
     IEnumerator ChangeTime(float meltTime)
     {
+        Lerp = 0;
         WaitForEndOfFrame wfeof = new WaitForEndOfFrame();
         while (Mathf.Floor(Lerp) != 1)
         {
