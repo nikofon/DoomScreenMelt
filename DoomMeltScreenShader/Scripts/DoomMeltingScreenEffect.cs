@@ -65,7 +65,7 @@ public class DoomMeltingScreenEffect : MonoBehaviour
             AnimationTime -= Time.deltaTime / meltTime;
             yield return wfeof;
         }
-        AnimationTime = 0;
+        AnimationTime = -1;
     }
 
     void Start()
@@ -80,7 +80,7 @@ public class DoomMeltingScreenEffect : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if(mat != null && AnimationTime > 0)
+        if(mat != null && AnimationTime != -1)
         {
             mat.SetFloat(TimeOffsetId, 1 - AnimationTime);
         }
