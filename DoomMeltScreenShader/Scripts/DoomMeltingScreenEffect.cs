@@ -80,7 +80,7 @@ public class DoomMeltingScreenEffect : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if(mat != null)
+        if(mat != null && AnimationTime > 0)
         {
             mat.SetFloat(TimeOffsetId, 1 - AnimationTime);
         }
